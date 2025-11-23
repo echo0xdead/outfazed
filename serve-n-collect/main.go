@@ -45,7 +45,7 @@ func main() {
     ctx, cancel := context.WithCancel(context.Background())
     wg := sync.WaitGroup{}
 
-    // proper signal handling
+    
     signals := make(chan os.Signal, 1)
     signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
     go func() {
@@ -56,50 +56,47 @@ func main() {
     fmt.Printf("serve-n-collect starting (HTTP:%d TCP:%d UDP:%d DNS:%d) logs:%s\n",
         *httpPort, *tcpPort, *udpPort, *dnsPort, *logDir)
 
-    // HTTP server (supports optional TLS)
+
     wg.Add(1)
     go func() {
         defer wg.Done()
         runHTTP(ctx, *httpPort, *logDir, *tlsCert, *tlsKey)
     }()
 
-    // TCP collector — pass pointer readTimeout (not its dereferenced value)
     wg.Add(1)
     go func() {
         defer wg.Done()
         runTCPCollector(ctx, *tcpPort, *logDir, readTimeout)
     }()
 
-    // UDP collector
     wg.Add(1)
     go func() {
         defer wg.Done()
         runUDPCollector(ctx, *udpPort, *logDir)
     }()
 
-    // DNS responder (UDP + TCP)
+
     wg.Add(1)
     go func() {
         defer wg.Done()
         runDNSResponder(ctx, *dnsPort, *logDir, *aRecord)
     }()
 
-    //All Ports 
+
     wg.Add(1)
     go func() {
 	defer wg.Done()
 	runAllTcpBindListeners(ctx, *logDir)
     }()
 
-    // wait until cancelled
+
     <-ctx.Done()
-    // give goroutines a moment to finish
+
     time.Sleep(200 * time.Millisecond)
     wg.Wait()
     fmt.Println("serve-n-collect stopped.")
 }
 
-// appendLog appends a single line to file under dir
 func appendLog(dir, fname, line string) {
     fn := filepath.Join(dir, fname)
     f, err := os.OpenFile(fn, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
@@ -111,12 +108,10 @@ func appendLog(dir, fname, line string) {
     _, _ = f.WriteString(line + "\n")
 }
 
-// Timestamp helper
+
 func ts() string { return time.Now().UTC().Format(time.RFC3339) }
 
-//
-// HTTP collector (POST /collect + fallback)
-//
+
 func runHTTP(ctx context.Context, port int, logDir, certPath, keyPath string) {
     mux := http.NewServeMux()
 
@@ -130,7 +125,7 @@ func runHTTP(ctx context.Context, port int, logDir, certPath, keyPath string) {
         _, _ = w.Write([]byte("OK"))
     })
 
-    // fallback for other methods/paths
+    
     mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         body, _ := io.ReadAll(r.Body)
         remote := r.RemoteAddr
@@ -146,7 +141,7 @@ func runHTTP(ctx context.Context, port int, logDir, certPath, keyPath string) {
         Handler: mux,
     }
 
-    // shutdown on ctx cancel
+    
     go func() {
         <-ctx.Done()
         _ = srv.Close()
@@ -164,9 +159,7 @@ func runHTTP(ctx context.Context, port int, logDir, certPath, keyPath string) {
     }
 }
 
-//
-// TCP collector
-//
+
 func runTCPCollector(ctx context.Context, port int, logDir string, timeout *time.Duration) {
     ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
     if err != nil {
@@ -198,7 +191,7 @@ func runTCPCollector(ctx context.Context, port int, logDir string, timeout *time
 func handleTCPConn(conn net.Conn, logDir string, timeout *time.Duration) {
     defer conn.Close()
     remote := conn.RemoteAddr().String()
-    // read until close or timeout
+    
     total := 0
     buf := make([]byte, 4096)
     for {
@@ -211,22 +204,20 @@ func handleTCPConn(conn net.Conn, logDir string, timeout *time.Duration) {
         }
         if err != nil {
             if ne, ok := err.(net.Error); ok && ne.Timeout() {
-                // read timeout -> stop reading
+                
                 break
             }
-            // EOF or other error -> stop
+            
             break
         }
-        // continue reading until EOF
+        
     }
     line := fmt.Sprintf("%s TCP connection from %s received=%d", ts(), remote, total)
     fmt.Println(line)
     appendLog(logDir, "tcp.log", line)
 }
 
-//
-// UDP collector
-//
+
 func runUDPCollector(ctx context.Context, port int, logDir string) {
     pc, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
     if err != nil {
@@ -258,9 +249,7 @@ func runUDPCollector(ctx context.Context, port int, logDir string) {
     }
 }
 
-//
-// DNS responder (UDP + TCP)
-//
+
 func runDNSResponder(ctx context.Context, port int, logDir, aRec string) {
     wg := sync.WaitGroup{}
     wg.Add(2)
@@ -350,7 +339,7 @@ func runDNSTCP(ctx context.Context, port int, logDir, aRec string) {
 
 func handleDNSQueryTCP(conn net.Conn, logDir, aRec string) {
     defer conn.Close()
-    // DNS over TCP is 2 byte length prefix followed by query
+    
     br := bufio.NewReader(conn)
     lenBytes := make([]byte, 2)
     if _, err := io.ReadFull(br, lenBytes); err != nil {
@@ -370,7 +359,7 @@ func handleDNSQueryTCP(conn net.Conn, logDir, aRec string) {
     if err != nil {
         return
     }
-    // send length prefixed response
+    
     respLen := make([]byte, 2)
     binary.BigEndian.PutUint16(respLen, uint16(len(resp)))
     _, _ = conn.Write(respLen)
@@ -404,14 +393,14 @@ func buildDNSResponse(query []byte, ipV4 net.IP) ([]byte, error) {
     }
     resp := make([]byte, len(query))
     copy(resp, query)
-    // flags: QR=1, AA=1 -> 0x8180 typical
+    
     resp[2] = 0x81
     resp[3] = 0x80
-    // set ANCOUNT = 1
+    
     resp[6] = 0x00
     resp[7] = 0x01
 
-    // append answer: pointer to name (0xC00C), type A (1), class IN (1), ttl 60, rdlength 4, rdata
+    
     var answer bytes.Buffer
     answer.Write([]byte{0xC0, 0x0C})
     answer.Write([]byte{0x00, 0x01, 0x00, 0x01})
@@ -424,7 +413,7 @@ func buildDNSResponse(query []byte, ipV4 net.IP) ([]byte, error) {
     return append(resp, answer.Bytes()...), nil
 }
 
-// runAllTcpBindListeners starts TCP listeners on all ports 1–65535
+
 func runAllTcpBindListeners(ctx context.Context, logDir string) {
     fmt.Println("Starting TCP listeners on ports 1–65535")
     sem := make(chan struct{}, 1000)
@@ -463,7 +452,7 @@ func runAllTcpBindListeners(ctx context.Context, logDir string) {
     }
 }
 
-// handleAnyTCPConn logs incoming TCP data per port
+
 func handleAnyTCPConn(conn net.Conn, logDir string, port int) {
     defer conn.Close()
     remote := conn.RemoteAddr().String()
