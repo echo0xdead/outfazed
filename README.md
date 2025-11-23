@@ -13,7 +13,7 @@ A console tool for probing outbound egress vectors and testing data transfer to 
 - **DNS-Based Covert Exfiltration** (via Base32 subdomain chunks)
 
 #### Usage
-```egress-n-exfil.exe <target_host_or_ip> <dns_exfil_domain> [payload_file]```
+```egress-n-exfil.exe <exfil_server_ip> <dns_exfil_domain> [exfil-data.zip]```
 
 ### 2. serve-n-collect (Golang)
 A flexible multi-protocol server that listens for incoming exfiltration payloads, logs data by channel, and supports:
