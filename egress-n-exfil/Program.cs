@@ -1,5 +1,4 @@
-﻿// Outfaze.Client - Program.cs
-// Paste into the Outfaze.Client console project (ImplicitUsings disabled, explicit Program.Main)
+// Outfaze.Client - Program.cs
 
 using System;
 using System.Collections.Generic;
@@ -129,12 +128,17 @@ namespace Outfaze.Client
         private async Task CheckUdpPortAsync(int port)
         {
             var udp = new UdpClient();
+            udp.Client.ReceiveTimeout = 500; 
+
             var sw = Stopwatch.StartNew();
             try
             {
+                
+                var sendCts = new CancellationTokenSource(TimeoutMs);
                 var sendTask = udp.SendAsync(Payload, Payload.Length, HostOrIp, port);
-                var completed = await Task.WhenAny(sendTask, Task.Delay(TimeoutMs));
-                if (completed != sendTask)
+                var completedSend = await Task.WhenAny(sendTask, Task.Delay(TimeoutMs, sendCts.Token));
+
+                if (completedSend != sendTask)
                 {
                     Console.WriteLine($"UDP  {port,5}: no-send/timeout ({TimeoutMs}ms)");
                     return;
@@ -143,18 +147,35 @@ namespace Outfaze.Client
                 sw.Stop();
                 Console.WriteLine($"UDP  {port,5}: sent ({Payload.Length} bytes) rtt {sw.ElapsedMilliseconds}ms");
 
-                udp.Client.ReceiveTimeout = 500;
+                
                 try
                 {
-                    var from = await udp.ReceiveAsync();
-                    Console.WriteLine($"UDP  {port,5}: received {from.Buffer.Length} bytes from {from.RemoteEndPoint}");
+                    
+                    var recvTask = udp.ReceiveAsync();
+                    var completedRecv = await Task.WhenAny(recvTask, Task.Delay(500)); 
+
+                    if (completedRecv == recvTask)
+                    {
+                        var from = recvTask.Result;
+                        Console.WriteLine($"UDP  {port,5}: received {from.Buffer.Length} bytes from {from.RemoteEndPoint}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"UDP  {port,5}: no response");
+                    }
                 }
-                catch (SocketException) { /* no reply */ }
-                catch (Exception) { /* ignore */ }
+                catch
+                {
+                    Console.WriteLine($"UDP  {port,5}: no response");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"UDP  {port,5}: error - {ex.Message}");
+            }
+            finally
+            {
+                udp.Close();
             }
         }
 
