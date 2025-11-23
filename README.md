@@ -1,5 +1,5 @@
 # Outfazed
-Outfaze is a Red Team tool designed to assess outbound egress paths and simulate controlled data exfiltration. It includes a .NET-based client probe and a Go-based server collector.
+Outfazed is a Red Team tool designed to assess outbound egress paths and simulate controlled data exfiltration. It includes a .NET-based client probe and a Go-based server collector.
 
 ## Components
 ### 1. egress-n-exfil (C#/.NET)
@@ -13,7 +13,7 @@ A console tool for probing outbound egress vectors and testing data transfer to 
 - **DNS-Based Covert Exfiltration** (via Base32 subdomain chunks)
 
 #### Usage
-```Outfaze.Client.exe <target_host_or_ip> <dns_exfil_domain> [payload_file]```
+```egress-n-exfil.exe <target_host_or_ip> <dns_exfil_domain> [payload_file]```
 
 ### 2. serve-n-collect (Golang)
 A flexible multi-protocol server that listens for incoming exfiltration payloads, logs data by channel, and supports:
