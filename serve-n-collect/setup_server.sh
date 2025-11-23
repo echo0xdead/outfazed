@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # setup_server.sh
-# Run on Ubuntu 24 (DigitalOcean). Expects the compiled Go binary "serve-n-collect"
+# Run on Ubuntu 24 - Expects the compiled Go binary "serve-n-collect"
 # present in the current directory. Installs minimal packages, creates service user,
 # installs binary to /opt/outfaze, configures systemd, sets capabilities, and opens firewall.
 #
@@ -8,7 +8,7 @@
 #   sudo bash setup_server.sh
 set -euo pipefail
 
-# Configurable variables
+
 BINARY_NAME="serve-n-collect"
 INSTALL_DIR="/opt/outfaze"
 SERVICE_USER="outfaze"
@@ -102,14 +102,10 @@ systemctl daemon-reload
 systemctl enable --now serve-n-collect.service
 
 echo "Configuring UFW firewall rules..."
-ufw allow OpenSSH
-
-ufw allow 8080/tcp    # HTTP collector
-ufw allow 4444/tcp    # TCP collector
-ufw allow 5000/udp    # UDP collector
-ufw allow 8053/udp    # DNS responder (UDP)
-ufw allow 8053/tcp
-ufw allow 1:65535/tcp # For full TCP coverage
+ufw allow OpenSSH   
+ufw allow 5000/udp   
+ufw allow 8053/udp    
+ufw allow 1:65535/tcp 
 
 if ufw status verbose | grep -q "Status: inactive"; then
   echo "Enabling UFW (SSH allowed)..."
