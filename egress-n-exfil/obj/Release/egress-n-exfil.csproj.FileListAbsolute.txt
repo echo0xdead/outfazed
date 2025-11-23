@@ -1,0 +1,7 @@
+C:\Users\apt4hax\source\repos\egress-n-exfil\bin\Release\egress-n-exfil.exe.config
+C:\Users\apt4hax\source\repos\egress-n-exfil\bin\Release\egress-n-exfil.exe
+C:\Users\apt4hax\source\repos\egress-n-exfil\bin\Release\egress-n-exfil.pdb
+C:\Users\apt4hax\source\repos\egress-n-exfil\obj\Release\egress-n-exfil.csproj.AssemblyReference.cache
+C:\Users\apt4hax\source\repos\egress-n-exfil\obj\Release\egress-n-exfil.csproj.CoreCompileInputs.cache
+C:\Users\apt4hax\source\repos\egress-n-exfil\obj\Release\egress-n-exfil.exe
+C:\Users\apt4hax\source\repos\egress-n-exfil\obj\Release\egress-n-exfil.pdb
