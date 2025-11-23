@@ -36,8 +36,8 @@ namespace Outfaze.Client
                 payload = Encoding.UTF8.GetBytes($"test-exfil-{DateTime.UtcNow:o}");
 
             var tester = new EgressTester(host, dnsDomain, payload, timeoutMs: 5000);
-            var ports = Enumerable.Range(1, 65535).ToArray(); // Full TCP port range
-                                                              // var ports = new int[] { 21, 22, 23, 25, 53, 80, 110, 123, 143, 161, 443, 445, 587, 1433, 1521, 3306, 3389, 4444, 5000, 8080, 8443 };
+            var ports = Enumerable.Range(1, 65535).ToArray(); 
+        // var ports = new int[] { 21, 22, 23, 25, 53, 80, 110, 123, 143, 161, 443, 445, 587, 1433, 1521, 3306, 3389, 4444, 5000, 8080, 8443 };
 
             await tester.TestPingAsync();
             await tester.TestTcpPortsAsync(ports);
@@ -78,7 +78,7 @@ namespace Outfaze.Client
         private async Task CheckTcpPortAsync(int port)
         {
             var sw = Stopwatch.StartNew();
-            var cts = new CancellationTokenSource(TimeoutMs); // Replace 'using' declaration with explicit disposal
+            var cts = new CancellationTokenSource(TimeoutMs); 
             try
             {
                 var tcp = new TcpClient();
@@ -115,7 +115,7 @@ namespace Outfaze.Client
             }
             finally
             {
-                cts.Dispose(); // Explicitly dispose of the CancellationTokenSource
+                cts.Dispose(); 
             }
         }
 
@@ -233,7 +233,7 @@ namespace Outfaze.Client
             }
         }
 
-        // Helpers
+       
         private static IEnumerable<string> ChunkString(string s, int chunkSize)
         {
             for (int i = 0; i < s.Length; i += chunkSize)
@@ -261,4 +261,5 @@ namespace Outfaze.Client
             return output.ToString();
         }
     }
+
 }
