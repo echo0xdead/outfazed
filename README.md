@@ -1,8 +1,8 @@
-# outfazed
+# Outfazed
 Outfaze is a Red Team-oriented toolkit designed to assess outbound egress paths and simulate controlled data exfiltration. It includes a .NET-based client probe and a Go-based server collector.
 
 ## Components
-### 1. Outfaze.Client (C#/.NET)
+### 1. egress-n-exfil (C#/.NET)
 A console tool for probing outbound egress vectors and testing data transfer to a specified target.
 
 #### Features
